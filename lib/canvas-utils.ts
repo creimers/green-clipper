@@ -1,3 +1,5 @@
+import { Area } from "react-easy-crop/types";
+
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -11,6 +13,24 @@ function getRadianAngle(degreeValue: number) {
   return (degreeValue * Math.PI) / 180;
 }
 
+export async function getScaledCrop(imageSrc: string): Promise<string> {
+  //   const image = new Image();
+  const image = await createImage(imageSrc);
+  //   image.src = dataUrl;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1200;
+  canvas.height = 600;
+
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(image, 0, 0, 1200, 600);
+  return new Promise((resolve) => {
+    canvas.toBlob((file) => {
+      resolve(URL.createObjectURL(file));
+    }, "image/png");
+  });
+}
+
 /**
  * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
  * @param {File} image - Image File url
@@ -19,7 +39,7 @@ function getRadianAngle(degreeValue: number) {
  */
 export async function getCroppedImg(
   imageSrc: string,
-  pixelCrop: any,
+  pixelCrop: Area,
   rotation = 0
 ): Promise<string> {
   const image = await createImage(imageSrc);
@@ -63,9 +83,13 @@ export async function getCroppedImg(
 
   // As a blob
   return new Promise((resolve) => {
-    canvas.toBlob((file) => {
-      resolve(URL.createObjectURL(file));
-    }, "image/png");
+    canvas.toBlob(
+      (file) => {
+        resolve(URL.createObjectURL(file));
+      },
+      "image/png",
+      0.5
+    );
   });
 }
 

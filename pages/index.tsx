@@ -2,9 +2,13 @@ import * as React from "react";
 import { getOrientation, Orientation } from "get-orientation/browser";
 import type { NextPage } from "next";
 import Cropper from "react-easy-crop";
-import { Point, Area } from "react-easy-crop/types";
+import { Area } from "react-easy-crop/types";
 
-import { getCroppedImg, getRotatedImage } from "lib/canvas-utils";
+import {
+  getCroppedImg,
+  getRotatedImage,
+  getScaledCrop,
+} from "lib/canvas-utils";
 
 function readFile(file: File): Promise<string | ArrayBuffer | null> {
   return new Promise((resolve) => {
@@ -36,19 +40,20 @@ const Home: NextPage = () => {
   const [croppedImage, setCroppedImage] = React.useState<string | null>(null);
 
   const showCroppedImage = async () => {
-    console.log("ding dong");
+    // console.log(croppedAreaPixels);
+    // return;
     try {
       const croppedImage = await getCroppedImg(
         imageSrc!,
-        croppedAreaPixels,
+        croppedAreaPixels!,
         rotation
       );
       console.log("donee", { croppedImage });
-      setCroppedImage(croppedImage);
-      var saveImg = document.createElement("a"); // New link we use to save it with
-      saveImg.href = croppedImage; // Assign image src to our link target
-      saveImg.download = "crop.jpg"; // set filename for download
-      // document.body.appendChild(saveImg);
+      //   setCroppedImage(croppedImage);
+      const scaledCrop = await getScaledCrop(croppedImage);
+      const saveImg = document.createElement("a"); // New link we use to save it with
+      saveImg.href = scaledCrop; // Assign image src to our link target
+      saveImg.download = "crop.png"; // set filename for download
       saveImg.click();
     } catch (e) {
       console.error("error", e);
@@ -96,8 +101,13 @@ const Home: NextPage = () => {
               onZoomChange={setZoom}
             />
           </div>
-          <div className="flex-shrink-0 p-8">
-            <button onClick={showCroppedImage}>get cropped image</button>
+          <div className="flex-shrink-0 p-8 flex justify-center">
+            <button
+              onClick={showCroppedImage}
+              className="bg-green-600 hover:bg-green-500 text-white p-5 rounded-xl text-lg"
+            >
+              Zuschnitt herunterladen
+            </button>
           </div>
         </div>
       ) : (
