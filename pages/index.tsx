@@ -1,6 +1,8 @@
 import * as React from "react";
 import { getOrientation, Orientation } from "get-orientation/browser";
 import type { NextPage } from "next";
+import Cropper from "react-easy-crop";
+import { Point, Area } from "react-easy-crop/types";
 
 import { getCroppedImg, getRotatedImage } from "lib/canvas-utils";
 
@@ -28,8 +30,30 @@ const Home: NextPage = () => {
   const [crop, setCrop] = React.useState({ x: 0, y: 0 });
   const [rotation, setRotation] = React.useState(0);
   const [zoom, setZoom] = React.useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = React.useState(null);
-  const [croppedImage, setCroppedImage] = React.useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = React.useState<Area | null>(
+    null
+  );
+  const [croppedImage, setCroppedImage] = React.useState<string | null>(null);
+
+  const showCroppedImage = async () => {
+    console.log("ding dong");
+    try {
+      const croppedImage = await getCroppedImg(
+        imageSrc!,
+        croppedAreaPixels,
+        rotation
+      );
+      console.log("donee", { croppedImage });
+      setCroppedImage(croppedImage);
+      var saveImg = document.createElement("a"); // New link we use to save it with
+      saveImg.href = croppedImage; // Assign image src to our link target
+      saveImg.download = "crop.jpg"; // set filename for download
+      // document.body.appendChild(saveImg);
+      saveImg.click();
+    } catch (e) {
+      console.error("error", e);
+    }
+  };
 
   const onFileChange = async (e: React.FormEvent<HTMLInputElement>) => {
     if (e.currentTarget.files && e.currentTarget.files.length > 0) {
@@ -47,12 +71,42 @@ const Home: NextPage = () => {
       }
     }
   };
+
+  const onCropComplete = React.useCallback(
+    (croppedArea: Area, croppedAreaPixels: Area) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    []
+  );
+
   return (
-    <div>
+    <div className="h-screen max-h-screen flex flex-col">
       {imageSrc ? (
-        <div>ding</div>
+        <div className="flex-1 flex flex-col">
+          <div className="relative flex-1">
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              rotation={rotation}
+              zoom={zoom}
+              aspect={2 / 1}
+              onCropChange={setCrop}
+              onRotationChange={setRotation}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+            />
+          </div>
+          <div className="flex-shrink-0 p-8">
+            <button onClick={showCroppedImage}>get cropped image</button>
+          </div>
+        </div>
       ) : (
-        <input type="file" onChange={onFileChange} accept="image/*" />
+        <input
+          type="file"
+          onChange={onFileChange}
+          accept="image/*"
+          onClick={showCroppedImage}
+        />
       )}
     </div>
   );
